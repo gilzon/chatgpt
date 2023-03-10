@@ -1,10 +1,17 @@
 import "./App.css";
 import "./normal.css";
-import { useState } from "react";
+import { useState , useEffect } from "react";
 
 
 function App() {
+
+useEffect(()=>{
+  listEngines();
+},[])
+
   const [input, setInput] = useState("");
+  const [models, setModels] = useState([]);
+  const [currentModel, setCurrentModel] = useState("ada");
   const [chatLog, setchatLog] = useState([
     {
       user: "me",
@@ -18,6 +25,15 @@ function App() {
   function clearChat(){
     setchatLog([]);
   }
+
+  function listEngines(){
+    fetch("http://localhost:3080/models")
+    .then(res => res.json())
+    .then(data => {
+      setModels(data.models.data)
+      console.log(data.models.data)
+  })
+}
   async function handleSubmit(e) {
     e.preventDefault();
     let chatLogNew =[...chatLog,{ user: "me", message: `${input}` }];
@@ -30,7 +46,8 @@ const response = await fetch("http://localhost:3080/", {
         "content-type": "application/json",
       },
       body: JSON.stringify({
-        message:messages
+        message:messages,
+        currentModel,
       }),
     });
 const data= await response.json();
@@ -45,13 +62,28 @@ console.log(data.message);
           <span>+</span>
           New chat
         </div>
+        <div className="models">
+         <select onChange={(e)=>{
+          setCurrentModel(e.target.value)
+         }}>
+          
+            {models.map((model,index)=>{
+              <option key={model.id} value={model.id}>{model.id}
+              </option>
+            })}
+          </select>
+        </div>
       </aside>
+
+      
       <section className="chatbox">
         <div className="chat-log">
           {chatLog.map((message, index) => (
             <ChatMessage key={index} message={message} />
           ))}
         </div>
+
+
         <div className="chat-input-holder">
           <form onSubmit={handleSubmit}>
             <input
@@ -97,6 +129,8 @@ const ChatMessage = ({ message }) => {
             </svg>
           )}
         </div>
+
+
         <div className="chat-message-text">{message.message}</div>
       </div>
     </div>
